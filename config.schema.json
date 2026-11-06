@@ -47,18 +47,15 @@
             "name": {
               "title": "Name",
               "type": "string",
-              "required": true,
               "placeholder": "Living room fan"
             },
             "id": {
               "title": "Tuya device ID",
-              "type": "string",
-              "required": true
+              "type": "string"
             },
             "key": {
               "title": "Tuya local key (16 characters)",
-              "type": "string",
-              "required": true
+              "type": "string"
             },
             "ip": {
               "title": "IP address (optional)",
@@ -275,7 +272,12 @@
               "type": "integer",
               "placeholder": "1000"
             }
-          }
+          },
+          "required": [
+            "name",
+            "id",
+            "key"
+          ]
         }
       }
     }

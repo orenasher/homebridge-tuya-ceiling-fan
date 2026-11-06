@@ -1,7 +1,7 @@
 {
   "name": "homebridge-tuya-ceiling-fan",
   "displayName": "Tuya Ceiling Fan (Local)",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Homebridge plugin for Tuya Wi-Fi ceiling fans over the local network, with a built-in setup wizard (English / Hebrew): fan speed steps that match the fan's real speeds, light brightness in percent and light modes.",
   "main": "index.js",
   "license": "MIT",
@@ -24,11 +24,12 @@
     "smart-life",
     "tuya",
     "tuya-local",
-    "wizard"
+    "wizard",
+    "supports-hap"
   ],
   "engines": {
     "node": "^18.15.0 || ^20.7.0 || ^22.0.0 || ^24.0.0",
-    "homebridge": "^1.6.0 || ^2.0.0-beta.0"
+    "homebridge": "^1.6.0 || ^2.0.0"
   },
   "files": [
     "index.js",
