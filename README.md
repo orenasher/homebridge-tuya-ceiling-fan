@@ -1,5 +1,7 @@
 # homebridge-tuya-ceiling-fan
 
+[![npm](https://img.shields.io/npm/v/homebridge-tuya-ceiling-fan)](https://www.npmjs.com/package/homebridge-tuya-ceiling-fan) [![downloads](https://img.shields.io/npm/dt/homebridge-tuya-ceiling-fan)](https://www.npmjs.com/package/homebridge-tuya-ceiling-fan) [![Donate](https://img.shields.io/badge/Donate-PayPal-blue?logo=paypal)](https://paypal.me/orenasher)
+
 English | [עברית](README.he.md)
 
 Homebridge plugin for Tuya Wi-Fi ceiling fans, controlled **locally** over your network (no cloud while running).
@@ -107,6 +109,10 @@ Other advanced options: `directionForward` and `directionReverse`, `speedAsStrin
 ## Credits
 
 The local Tuya protocol layer (`lib/TuyaAccessory.js`, `lib/TuyaDiscovery.js`) comes from [homebridge-tuya-plus](https://github.com/adrianjagielak/homebridge-tuya-plus), which builds on homebridge-tuya, homebridge-tuya-lan and TuyAPI. All MIT licensed.
+
+## Support
+
+If this plugin saves you time, you can buy me a coffee: [paypal.me/orenasher](https://paypal.me/orenasher). Thank you!
 
 ## License
 

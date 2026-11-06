@@ -1,5 +1,7 @@
 # homebridge-tuya-ceiling-fan
 
+[![npm](https://img.shields.io/npm/v/homebridge-tuya-ceiling-fan)](https://www.npmjs.com/package/homebridge-tuya-ceiling-fan) [![downloads](https://img.shields.io/npm/dt/homebridge-tuya-ceiling-fan)](https://www.npmjs.com/package/homebridge-tuya-ceiling-fan) [![Donate](https://img.shields.io/badge/Donate-PayPal-blue?logo=paypal)](https://paypal.me/orenasher)
+
 [English](README.md) | עברית
 
 פלאגין ל-Homebridge למאווררי תקרה של Tuya עם Wi-Fi, בשליטה **מקומית** ברשת הבית (בלי ענן בזמן שהוא רץ).
@@ -54,6 +56,10 @@
 ## קרדיט
 
 שכבת הפרוטוקול המקומי של Tuya (`lib/TuyaAccessory.js`, `lib/TuyaDiscovery.js`) מגיעה מ-[homebridge-tuya-plus](https://github.com/adrianjagielak/homebridge-tuya-plus), שמבוסס על homebridge-tuya, homebridge-tuya-lan ו-TuyAPI. הכול ברישיון MIT.
+
+## תמיכה
+
+אם התוסף חוסך לך זמן, אפשר לקנות לי קפה: [paypal.me/orenasher](https://paypal.me/orenasher). תודה!
 
 ## רישיון
 
