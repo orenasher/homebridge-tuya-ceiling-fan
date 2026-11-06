@@ -1,0 +1,334 @@
+{
+  "pluginAlias": "TuyaCeilingFan",
+  "pluginType": "platform",
+  "customUi": true,
+  "singular": true,
+  "headerDisplay": "Local control of Tuya Wi-Fi ceiling fans. Use the setup wizard above to find your fans automatically (device ID, local key and data points are filled in for you). Fan speed uses the fan's real number of speeds. The light has brightness in percent and light modes. / שליטה מקומית במאווררי תקרה של Tuya. השתמש באשף ההגדרה למעלה כדי למצוא את המאווררים אוטומטית.",
+  "schema": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "title": "Platform name",
+        "type": "string",
+        "default": "Tuya Ceiling Fan"
+      },
+      "language": {
+        "title": "Language / שפה",
+        "description": "Language of the setup wizard and of the Homebridge log messages.",
+        "type": "string",
+        "default": "en",
+        "oneOf": [
+          {
+            "title": "English",
+            "enum": [
+              "en"
+            ]
+          },
+          {
+            "title": "עברית (Hebrew)",
+            "enum": [
+              "he"
+            ]
+          }
+        ]
+      },
+      "discoverTimeout": {
+        "title": "Discovery timeout (ms)",
+        "description": "How long to wait for devices to show up on the network before falling back to a configured IP address.",
+        "type": "integer",
+        "default": 15000
+      },
+      "devices": {
+        "title": "Fans",
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "title": "Name",
+              "type": "string",
+              "required": true,
+              "placeholder": "Living room fan"
+            },
+            "id": {
+              "title": "Tuya device ID",
+              "type": "string",
+              "required": true
+            },
+            "key": {
+              "title": "Tuya local key (16 characters)",
+              "type": "string",
+              "required": true
+            },
+            "ip": {
+              "title": "IP address (optional)",
+              "description": "Leave empty to find the fan automatically. Set it if discovery does not find your fan. A fixed IP for the fan on your router is recommended.",
+              "type": "string",
+              "format": "ipv4"
+            },
+            "version": {
+              "title": "Protocol version (optional)",
+              "description": "Leave on automatic unless the fan connects but does not respond.",
+              "type": "string",
+              "oneOf": [
+                {
+                  "title": "Automatic",
+                  "enum": [
+                    ""
+                  ]
+                },
+                {
+                  "title": "3.1",
+                  "enum": [
+                    "3.1"
+                  ]
+                },
+                {
+                  "title": "3.3",
+                  "enum": [
+                    "3.3"
+                  ]
+                },
+                {
+                  "title": "3.4",
+                  "enum": [
+                    "3.4"
+                  ]
+                },
+                {
+                  "title": "3.5",
+                  "enum": [
+                    "3.5"
+                  ]
+                }
+              ]
+            },
+            "maxSpeed": {
+              "title": "Number of fan speeds",
+              "description": "The fan slider will show levels 1 to this number.",
+              "type": "integer",
+              "default": 6,
+              "minimum": 1,
+              "maximum": 20
+            },
+            "speedDisplay": {
+              "title": "Fan slider in the Home app",
+              "description": "Percent: 0-100 % in steps of 100 divided by the number of speeds (like most fan plugins). Levels: 0 to the number of speeds in steps of 1 (Apple Home may still show percent text).",
+              "type": "string",
+              "default": "percent",
+              "oneOf": [
+                {
+                  "title": "Percent (default)",
+                  "enum": [
+                    "percent"
+                  ]
+                },
+                {
+                  "title": "Levels",
+                  "enum": [
+                    "levels"
+                  ]
+                }
+              ]
+            },
+            "useLight": {
+              "title": "The fan has a light",
+              "type": "boolean",
+              "default": true
+            },
+            "useBrightness": {
+              "title": "Light brightness control (percent)",
+              "type": "boolean",
+              "default": true,
+              "condition": {
+                "functionBody": "return model.devices[arrayIndices].useLight !== false;"
+              }
+            },
+            "useColorTemp": {
+              "title": "Light modes (colour temperature)",
+              "type": "boolean",
+              "default": true,
+              "condition": {
+                "functionBody": "return model.devices[arrayIndices].useLight !== false;"
+              }
+            },
+            "lightModes": {
+              "title": "Discrete light modes (optional)",
+              "description": "Only if your light has a few fixed modes instead of a smooth colour temperature. List the values the device uses, warmest first, for example: warm, normal, cool. Or numbers such as 0, 500, 1000.",
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "condition": {
+                "functionBody": "return model.devices[arrayIndices].useLight !== false && model.devices[arrayIndices].useColorTemp !== false;"
+              }
+            },
+            "useDirection": {
+              "title": "Show direction (forward/reverse)",
+              "type": "boolean",
+              "default": true
+            },
+            "dpFanOn": {
+              "title": "Fan on/off DP",
+              "type": "integer",
+              "placeholder": "60"
+            },
+            "dpFanSpeed": {
+              "title": "Fan speed DP",
+              "type": "integer",
+              "placeholder": "62"
+            },
+            "dpFanDirection": {
+              "title": "Fan direction DP",
+              "type": "integer",
+              "placeholder": "63"
+            },
+            "dpSwing": {
+              "title": "Oscillation DP (optional)",
+              "type": "integer"
+            },
+            "dpLightOn": {
+              "title": "Light on/off DP",
+              "type": "integer",
+              "placeholder": "20"
+            },
+            "dpBrightness": {
+              "title": "Light brightness DP",
+              "type": "integer",
+              "placeholder": "22"
+            },
+            "dpColorTemp": {
+              "title": "Light colour temperature / mode DP",
+              "type": "integer",
+              "placeholder": "23"
+            },
+            "directionForward": {
+              "title": "Value for forward",
+              "type": "string",
+              "placeholder": "forward"
+            },
+            "directionReverse": {
+              "title": "Value for reverse",
+              "type": "string",
+              "placeholder": "reverse"
+            },
+            "fanDefaultSpeed": {
+              "title": "Speed when switched on from off",
+              "type": "integer",
+              "placeholder": "1"
+            },
+            "speedAsString": {
+              "title": "Send fan speed as text",
+              "description": "Most fans use a text enum (\"1\" to \"6\"). Turn off only if the fan ignores speed changes.",
+              "type": "boolean",
+              "default": true
+            },
+            "lightValuesAsString": {
+              "title": "Send light values as text",
+              "description": "Turn on only if brightness or colour temperature changes are ignored.",
+              "type": "boolean",
+              "default": false
+            },
+            "singleDpWrites": {
+              "title": "Send each data point in its own packet",
+              "description": "Turn on if turning the fan on or changing its speed is ignored while the light works.",
+              "type": "boolean",
+              "default": false
+            },
+            "minMired": {
+              "title": "Coolest colour temperature (mireds)",
+              "type": "integer",
+              "placeholder": "154"
+            },
+            "maxMired": {
+              "title": "Warmest colour temperature (mireds)",
+              "type": "integer",
+              "placeholder": "370"
+            },
+            "speedValues": {
+              "title": "Speed values (optional)",
+              "description": "Only for fans whose speed is not 1, 2, 3... List the fan's own speed values, slowest first. The number of items becomes the number of speeds.",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "speedPercent": {
+              "title": "Fan speed is a percent value (1-100)",
+              "description": "Turn on only if the fan's speed data point is a percent. The levels are spread over 1-100.",
+              "type": "boolean",
+              "default": false
+            },
+            "brightMin": {
+              "title": "Lowest brightness value",
+              "type": "integer",
+              "placeholder": "10"
+            },
+            "brightMax": {
+              "title": "Highest brightness value",
+              "type": "integer",
+              "placeholder": "1000"
+            },
+            "tempMax": {
+              "title": "Highest colour temperature value",
+              "description": "Value the fan uses for the coolest light (usually 1000).",
+              "type": "integer",
+              "placeholder": "1000"
+            }
+          }
+        }
+      }
+    }
+  },
+  "layout": [
+    "language",
+    "discoverTimeout",
+    {
+      "key": "devices",
+      "type": "array",
+      "buttonText": "Add fan",
+      "items": [
+        "devices[].name",
+        "devices[].id",
+        "devices[].key",
+        "devices[].ip",
+        "devices[].version",
+        "devices[].maxSpeed",
+        "devices[].speedDisplay",
+        "devices[].useLight",
+        "devices[].useBrightness",
+        "devices[].useColorTemp",
+        "devices[].lightModes",
+        "devices[].useDirection",
+        {
+          "type": "fieldset",
+          "title": "Advanced",
+          "expandable": true,
+          "expanded": false,
+          "items": [
+            "devices[].dpFanOn",
+            "devices[].dpFanSpeed",
+            "devices[].dpFanDirection",
+            "devices[].dpSwing",
+            "devices[].dpLightOn",
+            "devices[].dpBrightness",
+            "devices[].dpColorTemp",
+            "devices[].directionForward",
+            "devices[].directionReverse",
+            "devices[].fanDefaultSpeed",
+            "devices[].speedAsString",
+            "devices[].lightValuesAsString",
+            "devices[].singleDpWrites",
+            "devices[].minMired",
+            "devices[].maxMired",
+            "devices[].speedValues",
+            "devices[].speedPercent",
+            "devices[].brightMin",
+            "devices[].brightMax",
+            "devices[].tempMax"
+          ]
+        }
+      ]
+    }
+  ]
+}

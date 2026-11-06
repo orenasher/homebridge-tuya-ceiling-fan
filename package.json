@@ -1,0 +1,49 @@
+{
+  "name": "homebridge-tuya-ceiling-fan",
+  "displayName": "Tuya Ceiling Fan (Local)",
+  "version": "0.2.1",
+  "description": "Homebridge plugin for Tuya Wi-Fi ceiling fans over the local network, with a built-in setup wizard (English / Hebrew): fan speed steps that match the fan's real speeds, light brightness in percent and light modes.",
+  "main": "index.js",
+  "license": "MIT",
+  "author": "Oren Asher",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/orenasher/homebridge-tuya-ceiling-fan.git"
+  },
+  "bugs": {
+    "url": "https://github.com/orenasher/homebridge-tuya-ceiling-fan/issues"
+  },
+  "homepage": "https://github.com/orenasher/homebridge-tuya-ceiling-fan#readme",
+  "keywords": [
+    "ceiling-fan",
+    "fan",
+    "hebrew",
+    "homebridge-plugin",
+    "homekit",
+    "local",
+    "smart-life",
+    "tuya",
+    "tuya-local",
+    "wizard"
+  ],
+  "engines": {
+    "node": "^18.15.0 || ^20.7.0 || ^22.0.0 || ^24.0.0",
+    "homebridge": "^1.6.0 || ^2.0.0-beta.0"
+  },
+  "files": [
+    "index.js",
+    "lib",
+    "homebridge-ui",
+    "config.schema.json",
+    "README.md",
+    "README.he.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "@homebridge/plugin-ui-utils": "^2.0.0",
+    "async": "^3.2.2"
+  }
+}

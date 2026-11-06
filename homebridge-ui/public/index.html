@@ -1,0 +1,496 @@
+<style>
+  #tcf { max-width: 760px; margin: 0 auto; }
+  #tcf .tcf-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 12px; }
+  #tcf h5 { margin: 0; }
+  #tcf .card { margin-bottom: 14px; }
+  #tcf .card-body { padding: 14px; }
+  #tcf .tcf-chip { display: inline-block; font-size: 12px; padding: 1px 8px; border-radius: 10px; margin: 2px 4px 2px 0; background: rgba(128,128,128,.25); }
+  #tcf[dir=rtl] .tcf-chip { margin: 2px 0 2px 4px; }
+  #tcf .tcf-ok { background: rgba(40,167,69,.35); }
+  #tcf .tcf-warn { background: rgba(255,193,7,.4); }
+  #tcf .tcf-dev { border: 1px solid rgba(128,128,128,.35); border-radius: 8px; padding: 10px; margin-bottom: 8px; }
+  #tcf .tcf-dev label { margin: 0; }
+  #tcf .tcf-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  #tcf .tcf-grow { flex: 1 1 160px; }
+  #tcf .tcf-small { font-size: 12px; opacity: .8; }
+  #tcf ol { padding-inline-start: 22px; margin-bottom: 8px; }
+  #tcf li { margin-bottom: 6px; }
+  #tcf .tcf-err { color: #dc3545; margin-top: 8px; white-space: pre-wrap; }
+  #tcf .tcf-msg { margin-top: 8px; }
+  #tcf details > summary { cursor: pointer; font-weight: 600; margin-bottom: 8px; }
+  #tcf .btn { margin-inline-end: 6px; }
+  #tcf input[type=checkbox] { width: 20px; height: 20px; }
+</style>
+
+<div id="tcf" dir="ltr">
+  <div class="tcf-top">
+    <h5 id="tcf-title"></h5>
+    <div>
+      <button class="btn btn-sm btn-outline-primary" data-lang="en">English</button>
+      <button class="btn btn-sm btn-outline-primary" data-lang="he">עברית</button>
+    </div>
+  </div>
+
+  <div class="card"><div class="card-body">
+    <h6 id="tcf-h-added"></h6>
+    <div id="tcf-added"></div>
+  </div></div>
+
+  <div class="card"><div class="card-body">
+    <h6 id="tcf-h-add"></h6>
+    <p id="tcf-intro" class="tcf-small"></p>
+
+    <details id="tcf-guide">
+      <summary id="tcf-guide-title"></summary>
+      <ol id="tcf-guide-steps"></ol>
+    </details>
+
+    <div class="form-group">
+      <label for="tcf-id" id="tcf-l-id"></label>
+      <input id="tcf-id" class="form-control" autocomplete="off" autocapitalize="off" spellcheck="false">
+    </div>
+    <div class="form-group">
+      <label for="tcf-secret" id="tcf-l-secret"></label>
+      <input id="tcf-secret" type="password" class="form-control" autocomplete="off" autocapitalize="off" spellcheck="false">
+    </div>
+    <div class="form-group">
+      <label for="tcf-region" id="tcf-l-region"></label>
+      <select id="tcf-region" class="form-control"></select>
+    </div>
+    <button id="tcf-find" class="btn btn-primary"></button>
+    <div id="tcf-privacy" class="tcf-small" style="margin-top:8px"></div>
+    <div id="tcf-error" class="tcf-err"></div>
+
+    <div id="tcf-results" style="margin-top:14px"></div>
+  </div></div>
+
+  <div class="card"><div class="card-body">
+    <h6 id="tcf-h-adv"></h6>
+    <p id="tcf-adv-text" class="tcf-small"></p>
+    <button id="tcf-adv-btn" class="btn btn-outline-secondary"></button>
+  </div></div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var PLATFORM = 'TuyaCeilingFan';
+  // Settings the wizard detects itself; they are reset when a fan is re-detected.
+  var AUTO_KEYS = ['dpFanOn', 'dpFanSpeed', 'dpFanDirection', 'dpSwing', 'dpLightOn', 'dpBrightness', 'dpColorTemp',
+    'maxSpeed', 'speedAsString', 'speedValues', 'speedPercent', 'directionForward', 'directionReverse',
+    'useDirection', 'useLight', 'useBrightness', 'useColorTemp', 'brightMin', 'brightMax', 'tempMax'];
+  var REGIONS = [['auto', 'auto'], ['eu', 'Central Europe'], ['weu', 'Western Europe'], ['us', 'Western America'],
+    ['eus', 'Eastern America'], ['in', 'India'], ['sg', 'Singapore'], ['cn', 'China']];
+
+  var T = {
+    en: {
+      title: 'Tuya Ceiling Fan',
+      hAdded: 'Your fans',
+      noFans: 'No fans added yet. Use "Find my fans" below.',
+      remove: 'Remove',
+      removeAsk: 'Remove this fan from Homebridge?',
+      hAdd: 'Find and add my fans',
+      intro: 'Enter your Tuya developer keys once. The plugin finds every fan in your Smart Life / Tuya Smart app, fills in the device ID, the local key and the data point numbers, and from then on controls the fans locally over your Wi-Fi.',
+      guideTitle: 'Step-by-step guide: where do I get the keys?',
+      guide: [
+        'Open <a href="https://iot.tuya.com" target="_blank" rel="noopener">iot.tuya.com</a> and sign in or create a free account.',
+        'Go to <b>Cloud</b> &rarr; <b>Development</b> &rarr; <b>Create Cloud Project</b>. Industry: <b>Smart Home</b>, Development Method: <b>Smart Home</b>, Data Center: the region of your app account (for Israel and Europe: Central Europe). Not sure? Leave "auto" below.',
+        'When asked for APIs, keep the defaults. Make sure <b>IoT Core</b> and <b>Authorization Token Management</b> are on the list (Service API tab). They are free.',
+        'In your project open <b>Devices</b> &rarr; <b>Link App Account</b> &rarr; <b>Add App Account</b>. A QR code appears. In the Smart Life / Tuya Smart app tap <b>Me</b>, then the scan icon at the top, scan the code and confirm.',
+        'Open the project\'s <b>Overview</b> tab. Copy <b>Access ID / Client ID</b> and <b>Access Secret / Client Secret</b> into the boxes below.',
+        'Press <b>Find my fans</b>, tick the fans you want, press <b>Add selected</b>, then restart Homebridge.'
+      ],
+      lId: 'Access ID / Client ID',
+      lSecret: 'Access Secret / Client Secret',
+      lRegion: 'Data center',
+      regionAuto: 'Detect automatically',
+      find: 'Find my fans',
+      finding: 'Searching... this can take up to a minute',
+      privacy: 'The secret is used only now, to read your device list. It is not saved. After setup the plugin does not use the internet: control stays on your local network.',
+      foundFans: 'Fans found',
+      noneFound: 'No fans were found on this account. Check that the app account is linked (guide, step 4), or tick "Show other devices".',
+      showOther: 'Show other devices (not recognised as fans)',
+      otherDevices: 'Other devices',
+      addSel: 'Add selected',
+      nothingSel: 'Tick at least one fan.',
+      added: 'Saved. Restart Homebridge so the fans appear in the Home app.',
+      already: 'already added',
+      offline: 'offline',
+      name: 'Name',
+      speeds: function (n) { return n + ' speeds'; },
+      fChip: { fan: 'Fan', direction: 'Direction', swing: 'Oscillation', light: 'Light', brightness: 'Brightness %', colorTemp: 'Light modes' },
+      noNoKey: 'No local key for this device (it is probably not a Wi-Fi device).',
+      inspectFail: 'Could not read the data points of this fan. It can still be added with default settings; you can fix them under Advanced settings.',
+      unmapped: 'Other data points (for support)',
+      notes: {
+        speedValues: 'This fan uses its own speed names; they are mapped to levels in order.',
+        speedPercent: 'This fan takes a percent speed; 6 levels are spread over it (change the number of speeds under Advanced if 6 is wrong).'
+      },
+      hAdv: 'Advanced settings',
+      advText: 'Edit everything manually: data point numbers, light modes, IP address, protocol version.',
+      advBtn: 'Open advanced settings',
+      advClose: 'Hide advanced settings',
+      errors: {
+        missing: 'Please enter the Access ID and the Access Secret.',
+        1004: 'Tuya rejected the keys. Check the Access ID and Access Secret (no spaces).',
+        1106: 'No permission. Make sure the app account is linked to the project (guide, step 4) and that IoT Core and Authorization Token Management are enabled.',
+        28841002: 'No permission. In the Tuya project, open Service API and subscribe to / renew <b>IoT Core</b> (free).',
+        28841105: 'No permission. In the Tuya project, open Service API and subscribe to / renew <b>IoT Core</b> (free).',
+        2007: 'Wrong data center. Choose "Detect automatically" or the region of your project.',
+        network: 'Homebridge could not reach Tuya. Check the internet connection of the Raspberry Pi / server.',
+        session: 'The session expired. Press "Find my fans" again.',
+        other: 'Tuya answered with an error.'
+      }
+    },
+    he: {
+      title: 'מאוורר תקרה Tuya',
+      hAdded: 'המאווררים שלך',
+      noFans: 'עדיין לא נוספו מאווררים. השתמש ב"מצא את המאווררים שלי" למטה.',
+      remove: 'הסר',
+      removeAsk: 'להסיר את המאוורר הזה מ-Homebridge?',
+      hAdd: 'מצא והוסף את המאווררים שלי',
+      intro: 'מזינים פעם אחת את מפתחות המפתחים של Tuya. הפלאגין מוצא את כל המאווררים באפליקציית Smart Life / Tuya Smart, ממלא לבד את מזהה המכשיר, המפתח המקומי ומספרי נקודות הנתונים, ומשם והלאה שולט במאווררים מקומית דרך ה-Wi-Fi שלך.',
+      guideTitle: 'מדריך צעד אחר צעד: מאיפה מביאים את המפתחות?',
+      guide: [
+        'היכנס ל-<a href="https://iot.tuya.com" target="_blank" rel="noopener">iot.tuya.com</a> והתחבר או פתח חשבון חינמי.',
+        'לך אל <b>Cloud</b> &larr; <b>Development</b> &larr; <b>Create Cloud Project</b>. Industry: <b>Smart Home</b>, Development Method: <b>Smart Home</b>, Data Center: האזור של חשבון האפליקציה שלך (בישראל ובאירופה: Central Europe). לא בטוח? השאר "זיהוי אוטומטי" למטה.',
+        'כשמבקשים לבחור APIs השאר את ברירות המחדל. ודא ש-<b>IoT Core</b> ו-<b>Authorization Token Management</b> ברשימה (לשונית Service API). שניהם חינמיים.',
+        'בפרויקט היכנס ל-<b>Devices</b> &larr; <b>Link App Account</b> &larr; <b>Add App Account</b>. יופיע קוד QR. באפליקציית Smart Life / Tuya Smart לחץ על <b>Me</b>, אחר כך על סמל הסריקה למעלה, סרוק את הקוד ואשר.',
+        'פתח את לשונית <b>Overview</b> של הפרויקט. העתק את <b>Access ID / Client ID</b> ואת <b>Access Secret / Client Secret</b> לתיבות למטה.',
+        'לחץ <b>מצא את המאווררים שלי</b>, סמן את המאווררים הרצויים, לחץ <b>הוסף את המסומנים</b> והפעל מחדש את Homebridge.'
+      ],
+      lId: 'Access ID / Client ID',
+      lSecret: 'Access Secret / Client Secret',
+      lRegion: 'מרכז נתונים (Data center)',
+      regionAuto: 'זיהוי אוטומטי',
+      find: 'מצא את המאווררים שלי',
+      finding: 'מחפש... זה יכול לקחת עד דקה',
+      privacy: 'הסוד משמש רק עכשיו כדי לקרוא את רשימת המכשירים. הוא לא נשמר. אחרי ההגדרה הפלאגין לא משתמש באינטרנט: השליטה נשארת ברשת המקומית שלך.',
+      foundFans: 'מאווררים שנמצאו',
+      noneFound: 'לא נמצאו מאווררים בחשבון. בדוק שחשבון האפליקציה מקושר (מדריך, שלב 4), או סמן "הצג מכשירים אחרים".',
+      showOther: 'הצג מכשירים אחרים (שלא זוהו כמאווררים)',
+      otherDevices: 'מכשירים אחרים',
+      addSel: 'הוסף את המסומנים',
+      nothingSel: 'סמן לפחות מאוורר אחד.',
+      added: 'נשמר. הפעל מחדש את Homebridge כדי שהמאווררים יופיעו באפליקציית הבית.',
+      already: 'כבר נוסף',
+      offline: 'לא מחובר',
+      name: 'שם',
+      speeds: function (n) { return n + ' מהירויות'; },
+      fChip: { fan: 'מאוורר', direction: 'כיוון', swing: 'נדנוד', light: 'תאורה', brightness: 'עוצמת תאורה %', colorTemp: 'מצבי אור' },
+      noNoKey: 'אין מפתח מקומי למכשיר הזה (כנראה זה לא מכשיר Wi-Fi).',
+      inspectFail: 'לא הצלחתי לקרוא את נקודות הנתונים של המאוורר. אפשר עדיין להוסיף אותו עם הגדרות ברירת מחדל ולתקן בהגדרות המתקדמות.',
+      unmapped: 'נקודות נתונים נוספות (לתמיכה)',
+      notes: {
+        speedValues: 'למאוורר הזה יש שמות מהירות משלו; הם ממופים לרמות לפי הסדר.',
+        speedPercent: 'המאוורר הזה מקבל מהירות באחוזים; 6 רמות מחולקות עליה (אם 6 לא נכון, שנה את מספר המהירויות בהגדרות המתקדמות).'
+      },
+      hAdv: 'הגדרות מתקדמות',
+      advText: 'עריכה ידנית של הכול: מספרי נקודות נתונים, מצבי אור, כתובת IP, גרסת פרוטוקול.',
+      advBtn: 'פתח הגדרות מתקדמות',
+      advClose: 'הסתר הגדרות מתקדמות',
+      errors: {
+        missing: 'נא להזין Access ID ו-Access Secret.',
+        1004: 'Tuya דחתה את המפתחות. בדוק את ה-Access ID וה-Access Secret (בלי רווחים).',
+        1106: 'אין הרשאה. ודא שחשבון האפליקציה מקושר לפרויקט (מדריך, שלב 4) ושהשירותים IoT Core ו-Authorization Token Management פעילים.',
+        28841002: 'אין הרשאה. בפרויקט של Tuya פתח Service API ועשה Subscribe / חידוש ל-<b>IoT Core</b> (חינם).',
+        28841105: 'אין הרשאה. בפרויקט של Tuya פתח Service API ועשה Subscribe / חידוש ל-<b>IoT Core</b> (חינם).',
+        2007: 'מרכז נתונים שגוי. בחר "זיהוי אוטומטי" או את האזור של הפרויקט.',
+        network: 'Homebridge לא הצליח להגיע ל-Tuya. בדוק את החיבור לאינטרנט של ה-Raspberry Pi / השרת.',
+        session: 'פג תוקף החיבור. לחץ שוב "מצא את המאווררים שלי".',
+        other: 'Tuya החזירה שגיאה.'
+      }
+    }
+  };
+
+  var lang = 'en';
+  var state = {devices: null, showOther: false, selected: {}, names: {}, config: null, busy: false};
+
+  function $(id) { return document.getElementById(id); }
+  function tr() { return T[lang]; }
+
+  function el(tag, attrs, children) {
+    var node = document.createElement(tag);
+    Object.keys(attrs || {}).forEach(function (k) {
+      if (k === 'text') node.textContent = attrs[k];
+      else if (k === 'class') node.className = attrs[k];
+      else if (k.slice(0, 2) === 'on') node.addEventListener(k.slice(2), attrs[k]);
+      else node.setAttribute(k, attrs[k]);
+    });
+    (children || []).forEach(function (c) { if (c) node.appendChild(c); });
+    return node;
+  }
+
+  function chip(text, cls) { return el('span', {class: 'tcf-chip' + (cls ? ' ' + cls : ''), text: text}); }
+
+  // ---------------------------------------------------------------- config helpers
+
+  async function loadConfig() {
+    var list = await homebridge.getPluginConfig();
+    var cfg = (list && list[0]) || {};
+    if (!cfg.platform) cfg.platform = PLATFORM;
+    if (!cfg.name) cfg.name = 'Tuya Ceiling Fan';
+    if (!Array.isArray(cfg.devices)) cfg.devices = [];
+    state.config = cfg;
+    if (cfg.language === 'he' || cfg.language === 'en') lang = cfg.language;
+    else {
+      try { var saved = localStorage.getItem('tcf-lang'); if (saved === 'he' || saved === 'en') lang = saved; } catch (e) { /* storage unavailable */ }
+    }
+  }
+
+  async function saveConfig() {
+    state.config.language = lang;
+    await homebridge.updatePluginConfig([state.config]);
+    await homebridge.savePluginConfig();
+  }
+
+  function addedIds() { return state.config.devices.map(function (d) { return d.id; }); }
+
+  // ---------------------------------------------------------------- rendering
+
+  function applyLanguage() {
+    var t = tr();
+    $('tcf').setAttribute('dir', lang === 'he' ? 'rtl' : 'ltr');
+    $('tcf-title').textContent = t.title;
+    $('tcf-h-added').textContent = t.hAdded;
+    $('tcf-h-add').textContent = t.hAdd;
+    $('tcf-intro').textContent = t.intro;
+    $('tcf-guide-title').textContent = t.guideTitle;
+    var steps = $('tcf-guide-steps');
+    steps.textContent = '';
+    t.guide.forEach(function (html) { var li = document.createElement('li'); li.innerHTML = html; steps.appendChild(li); });
+    $('tcf-l-id').textContent = t.lId;
+    $('tcf-l-secret').textContent = t.lSecret;
+    $('tcf-l-region').textContent = t.lRegion;
+    var sel = $('tcf-region');
+    var current = sel.value || 'auto';
+    sel.textContent = '';
+    REGIONS.forEach(function (r) { sel.appendChild(el('option', {value: r[0], text: r[0] === 'auto' ? t.regionAuto : r[1]})); });
+    sel.value = current;
+    $('tcf-find').textContent = state.busy ? t.finding : t.find;
+    $('tcf-privacy').textContent = t.privacy;
+    $('tcf-h-adv').textContent = t.hAdv;
+    $('tcf-adv-text').textContent = t.advText;
+    $('tcf-adv-btn').textContent = advOpen ? t.advClose : t.advBtn;
+    document.querySelectorAll('#tcf [data-lang]').forEach(function (b) {
+      b.className = 'btn btn-sm ' + (b.getAttribute('data-lang') === lang ? 'btn-primary' : 'btn-outline-primary');
+    });
+    renderAdded();
+    renderResults();
+  }
+
+  function renderAdded() {
+    var t = tr();
+    var box = $('tcf-added');
+    box.textContent = '';
+    if (!state.config.devices.length) {
+      box.appendChild(el('div', {class: 'tcf-small', text: t.noFans}));
+      return;
+    }
+    state.config.devices.forEach(function (d, i) {
+      box.appendChild(el('div', {class: 'tcf-dev'}, [el('div', {class: 'tcf-row'}, [
+        el('div', {class: 'tcf-grow'}, [
+          el('b', {text: d.name || d.id}),
+          el('div', {class: 'tcf-small', text: d.id + (d.maxSpeed ? ' · ' + t.speeds(d.maxSpeed) : '')})
+        ]),
+        el('button', {class: 'btn btn-sm btn-outline-danger', text: t.remove, onclick: function () { removeFan(i); }})
+      ])]));
+    });
+  }
+
+  function featureChips(m) {
+    var t = tr();
+    var f = m.features;
+    var out = [];
+    if (f.fan) out.push(chip(t.fChip.fan + (f.speeds ? ' · ' + t.speeds(f.speeds) : ''), 'tcf-ok'));
+    ['direction', 'swing', 'light', 'brightness', 'colorTemp'].forEach(function (k) { if (f[k]) out.push(chip(t.fChip[k], 'tcf-ok')); });
+    return out;
+  }
+
+  function deviceCard(d) {
+    var t = tr();
+    var already = addedIds().indexOf(d.id) !== -1;
+    var checked = !!state.selected[d.id];
+    var box = el('input', {type: 'checkbox', id: 'tcf-c-' + d.id});
+    box.checked = checked;
+    if (!d.localKey) box.disabled = true;
+    box.addEventListener('change', function () { state.selected[d.id] = box.checked; });
+
+    var nameInput = el('input', {class: 'form-control form-control-sm', 'aria-label': t.name, value: state.names[d.id] || d.name || d.id});
+    nameInput.addEventListener('input', function () { state.names[d.id] = nameInput.value; });
+
+    var chips = [];
+    if (d.online === false) chips.push(chip(t.offline, 'tcf-warn'));
+    if (already) chips.push(chip(t.already));
+    if (d.mapped) featureChips(d.mapped).forEach(function (c) { chips.push(c); });
+    if (d.mapped) d.mapped.notes.forEach(function (n) { chips.push(chip(t.notes[n] || n, 'tcf-warn')); });
+
+    var extra = [];
+    if (!d.localKey) extra.push(el('div', {class: 'tcf-small', text: t.noNoKey}));
+    if (d.inspectError) extra.push(el('div', {class: 'tcf-small tcf-warn tcf-chip', text: t.inspectFail}));
+    if (d.mapped && d.mapped.unmapped.length) {
+      extra.push(el('details', {class: 'tcf-small'}, [
+        el('summary', {text: t.unmapped}),
+        el('div', {text: d.mapped.unmapped.join(', ')})
+      ]));
+    }
+
+    return el('div', {class: 'tcf-dev'}, [
+      el('div', {class: 'tcf-row'}, [box, el('div', {class: 'tcf-grow'}, [nameInput])]),
+      el('div', {style: 'margin-top:6px'}, chips),
+      el('div', {}, extra)
+    ]);
+  }
+
+  function renderResults() {
+    var t = tr();
+    var box = $('tcf-results');
+    box.textContent = '';
+    if (!state.devices) return;
+
+    var fans = state.devices.filter(function (d) { return d.fanLike; });
+    var others = state.devices.filter(function (d) { return !d.fanLike; });
+
+    box.appendChild(el('h6', {text: t.foundFans + ' (' + fans.length + ')'}));
+    if (!fans.length) box.appendChild(el('div', {class: 'tcf-small', text: t.noneFound}));
+    fans.forEach(function (d) { box.appendChild(deviceCard(d)); });
+
+    if (others.length) {
+      var toggle = el('input', {type: 'checkbox', id: 'tcf-show-other'});
+      toggle.checked = state.showOther;
+      toggle.addEventListener('change', function () { state.showOther = toggle.checked; renderResults(); });
+      box.appendChild(el('div', {class: 'tcf-row', style: 'margin:10px 0'}, [toggle, el('label', {for: 'tcf-show-other', text: t.showOther})]));
+      if (state.showOther) {
+        box.appendChild(el('h6', {text: t.otherDevices}));
+        others.forEach(function (d) { box.appendChild(deviceCard(d)); });
+      }
+    }
+
+    box.appendChild(el('button', {class: 'btn btn-success', text: t.addSel, onclick: addSelected}));
+    box.appendChild(el('div', {id: 'tcf-msg', class: 'tcf-msg'}));
+  }
+
+  function showError(err) {
+    var t = tr();
+    var box = $('tcf-error');
+    box.textContent = '';
+    if (!err) return;
+    var known = t.errors[err.code];
+    var span = document.createElement('span');
+    if (known) span.innerHTML = known;
+    else span.textContent = t.errors.other + ' (' + err.code + ': ' + err.msg + ')';
+    box.appendChild(span);
+  }
+
+  // ---------------------------------------------------------------- actions
+
+  async function find() {
+    if (state.busy) return;
+    var accessId = $('tcf-id').value.trim();
+    var accessSecret = $('tcf-secret').value.trim();
+    showError(null);
+    state.busy = true;
+    $('tcf-find').disabled = true;
+    $('tcf-find').textContent = tr().finding;
+    homebridge.showSpinner();
+    try {
+      var res = await homebridge.request('/connect', {accessId: accessId, accessSecret: accessSecret, region: $('tcf-region').value});
+      if (!res.ok) { showError(res.error); state.devices = null; }
+      else {
+        state.devices = res.devices;
+        state.selected = {};
+        state.names = {};
+        res.devices.forEach(function (d) { if (d.fanLike && d.localKey && addedIds().indexOf(d.id) === -1) state.selected[d.id] = true; });
+      }
+    } catch (e) {
+      showError({code: 'network', msg: e && e.message ? e.message : String(e)});
+    } finally {
+      homebridge.hideSpinner();
+      state.busy = false;
+      $('tcf-find').disabled = false;
+      $('tcf-find').textContent = tr().find;
+      renderResults();
+    }
+  }
+
+  async function inspectIfNeeded(d) {
+    if (d.mapped || d.inspectError || !d.localKey) return;
+    var res = await homebridge.request('/inspect', {id: d.id});
+    if (res.ok) d.mapped = res.mapped; else d.inspectError = res.error;
+  }
+
+  async function addSelected() {
+    var t = tr();
+    var chosen = (state.devices || []).filter(function (d) { return state.selected[d.id] && d.localKey; });
+    var msg = $('tcf-msg');
+    if (!chosen.length) { msg.textContent = t.nothingSel; return; }
+    homebridge.showSpinner();
+    try {
+      for (var i = 0; i < chosen.length; i++) {
+        var d = chosen[i];
+        await inspectIfNeeded(d);
+        var entry = {name: (state.names[d.id] || d.name || d.id).trim(), id: d.id, key: d.localKey};
+        Object.assign(entry, d.mapped ? d.mapped.config : {});
+        var at = addedIds().indexOf(d.id);
+        if (at === -1) state.config.devices.push(entry);
+        else {
+          var old = state.config.devices[at];
+          AUTO_KEYS.forEach(function (k) { delete old[k]; });
+          state.config.devices[at] = Object.assign(old, entry);
+        }
+      }
+      await saveConfig();
+      state.selected = {};
+      homebridge.toast.success(t.added);
+      renderAdded();
+      renderResults();
+      $('tcf-msg').textContent = t.added;
+    } catch (e) {
+      homebridge.toast.error(String(e && e.message ? e.message : e));
+    } finally {
+      homebridge.hideSpinner();
+    }
+  }
+
+  async function removeFan(index) {
+    if (!window.confirm(tr().removeAsk)) return;
+    state.config.devices.splice(index, 1);
+    await saveConfig();
+    renderAdded();
+    renderResults();
+  }
+
+  var advOpen = false;
+  function toggleAdvanced() {
+    advOpen = !advOpen;
+    if (advOpen) homebridge.showSchemaForm(); else homebridge.hideSchemaForm();
+    $('tcf-adv-btn').textContent = advOpen ? tr().advClose : tr().advBtn;
+  }
+
+  function setLang(next) {
+    lang = next;
+    try { localStorage.setItem('tcf-lang', lang); } catch (e) { /* storage unavailable */ }
+    applyLanguage();
+    if (state.config && state.config.devices) { saveLanguageOnly(); }
+  }
+
+  async function saveLanguageOnly() {
+    try { state.config.language = lang; await homebridge.updatePluginConfig([state.config]); } catch (e) { /* not critical */ }
+  }
+
+  async function init() {
+    await loadConfig();
+    homebridge.hideSchemaForm();
+    document.querySelectorAll('#tcf [data-lang]').forEach(function (b) {
+      b.addEventListener('click', function () { setLang(b.getAttribute('data-lang')); });
+    });
+    $('tcf-find').addEventListener('click', find);
+    $('tcf-adv-btn').addEventListener('click', toggleAdvanced);
+    if (!state.config.devices.length) $('tcf-guide').setAttribute('open', '');
+    applyLanguage();
+  }
+
+  init();
+})();
+</script>
