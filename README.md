@@ -1,3 +1,5 @@
+<p align="center"><img src="icon-512.png" width="120" alt=""></p>
+
 # homebridge-tuya-ceiling-fan
 
 [![npm](https://img.shields.io/npm/v/homebridge-tuya-ceiling-fan)](https://www.npmjs.com/package/homebridge-tuya-ceiling-fan) [![downloads](https://img.shields.io/npm/dt/homebridge-tuya-ceiling-fan)](https://www.npmjs.com/package/homebridge-tuya-ceiling-fan) [![Donate](https://img.shields.io/badge/Donate-PayPal-blue?logo=paypal)](https://paypal.me/orenasher)
